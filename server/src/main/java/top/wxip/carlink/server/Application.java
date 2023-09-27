@@ -5,16 +5,15 @@ import android.view.InputDevice;
 import android.view.MotionEvent;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicReference;
 
-import cn.hutool.core.thread.ThreadUtil;
 import top.wxip.carlink.common.Action;
 import top.wxip.carlink.common.ControlPacket;
 import top.wxip.carlink.common.Port;
-import top.wxip.carlink.common.SocketUtil;
 import top.wxip.carlink.server.util.Ln;
 import top.wxip.carlink.server.wrapper.DisplayInfo;
 import top.wxip.carlink.server.wrapper.DisplayManager;
@@ -40,10 +39,11 @@ public class Application {
         Ln.i("建立视频通道成功");
 
         // 建立控制通道
-        AtomicReference<Socket> controlSocketRaw = new AtomicReference<>();
-        try (ServerSocket serverSocket = new ServerSocket(Port.CONTROL)) {
+        AtomicReference<DatagramSocket> controlSocketRaw = new AtomicReference<>();
+        try {
+            DatagramSocket controlSocket = new DatagramSocket(Port.CONTROL);
+            controlSocketRaw.set(controlSocket);
             Ln.action(Action.ESTABLISH_CONTROL);
-            controlSocketRaw.set(serverSocket.accept());
         } catch (IOException e) {
             Ln.e("建立控制通道失败,server退出", e);
             System.exit(0);
@@ -77,12 +77,13 @@ public class Application {
 
         // 接受控制通道的数据
         new Thread(() -> {
-            final Socket controlSocket = controlSocketRaw.get();
+            final DatagramSocket controlSocket = controlSocketRaw.get();
             long lastTouchDown = SystemClock.uptimeMillis();
             while (true) {
                 try {
-                    InputStream inputStream = controlSocket.getInputStream();
-                    byte[] packet = SocketUtil.readPacket(inputStream);
+                    byte[] packet = new byte[1024];
+                    final DatagramPacket datagramPacket = new DatagramPacket(packet,packet.length);
+                    controlSocket.receive(datagramPacket);
                     final ControlPacket controlPacket = new ControlPacket(packet);
 
 //                    Ln.i("接受控制流:" + controlPacket);

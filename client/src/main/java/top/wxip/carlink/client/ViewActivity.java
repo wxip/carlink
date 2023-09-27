@@ -17,6 +17,9 @@ import com.orhanobut.logger.Logger;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -24,6 +27,7 @@ import cn.hutool.core.util.HexUtil;
 import top.wxip.carlink.client.util.H264Util;
 import top.wxip.carlink.client.util.StreamSetting;
 import top.wxip.carlink.common.ControlPacket;
+import top.wxip.carlink.common.Port;
 import top.wxip.carlink.common.SocketUtil;
 import top.wxip.carlink.common.VideoPacket;
 
@@ -117,32 +121,29 @@ public class ViewActivity extends Activity {
 
             private static void setControlSocket(SurfaceView displayView, int remoteWidth, int remoteHeight) {
                 // 传输控制流
-                final Socket controlSocket = GlobalItem.getInstance().getControlSocket();
-                try {
-                    final OutputStream outputStream = controlSocket.getOutputStream();
-                    AtomicLong lastEventTime = new AtomicLong(System.currentTimeMillis());
-                    displayView.setOnTouchListener((v, event) -> {
-                        long now = System.currentTimeMillis();
-                        if (MotionEvent.ACTION_MOVE == event.getAction() && (now - lastEventTime.get() < 50)) {
-                            return true;
+                final DatagramSocket controlSocket = GlobalItem.getInstance().getControlSocket();
+                AtomicLong lastEventTime = new AtomicLong(System.currentTimeMillis());
+                displayView.setOnTouchListener((v, event) -> {
+                    long now = System.currentTimeMillis();
+//                    if (MotionEvent.ACTION_MOVE == event.getAction() && (now - lastEventTime.get() < 50)) {
+//                        return true;
+//                    }
+                    lastEventTime.set(now);
+                    new Thread(() -> {
+                        ControlPacket controlPacket = new ControlPacket().setAction(event.getAction())
+                                .setX(event.getX() * remoteWidth / displayView.getWidth())
+                                .setY(event.getY() * remoteHeight / displayView.getHeight());
+                        try {
+                            InetAddress remoteAddr = InetAddress.getByName(GlobalItem.getInstance().getRemoteAddr());
+//                            Logger.i("发送控制流:" + controlPacket);
+                            byte[] packet = controlPacket.toByte();
+                            controlSocket.send(new DatagramPacket(packet, packet.length, remoteAddr, Port.CONTROL));
+                        } catch (IOException e) {
+                            Logger.e(e, "发送控制流出错");
                         }
-                        lastEventTime.set(now);
-                        new Thread(() -> {
-                            ControlPacket controlPacket = new ControlPacket().setAction(event.getAction())
-                                    .setX(event.getX() * remoteWidth / displayView.getWidth())
-                                    .setY(event.getY() * remoteHeight / displayView.getHeight());
-                            try {
-                                Logger.i("发送控制流:" + controlPacket);
-                                SocketUtil.sendPacket(outputStream, controlPacket.toByte());
-                            } catch (IOException e) {
-                                Logger.e(e, "发送控制流出错");
-                            }
-                        }).start();
-                        return true;
-                    });
-                } catch (IOException e) {
-                    Logger.e(e, "设置控制流失败");
-                }
+                    }).start();
+                    return true;
+                });
             }
 
             @Override

@@ -17,6 +17,7 @@ import com.tananaev.adblib.AdbCrypto;
 import com.tananaev.adblib.AdbStream;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
@@ -67,7 +68,7 @@ public class MainActivity extends Activity {
                 AdbConnection adbConnection = null;
                 AdbStream adbStream = null;
                 Socket videoSocket = null;
-                Socket controlSocket = null;
+                DatagramSocket controlSocket = null;
                 Socket audioSocket = null;
                 try {
                     try {
@@ -116,7 +117,7 @@ public class MainActivity extends Activity {
                                 // 建立控制连接
                                 ThreadUtil.safeSleep(100);
                                 try {
-                                    controlSocket = new Socket(remoteAddr, Port.CONTROL);
+                                    controlSocket = new DatagramSocket();
                                 } catch (IOException e) {
                                     error(e, "建立控制连接失败,adb退出");
                                     adbStream.close();
@@ -135,6 +136,7 @@ public class MainActivity extends Activity {
                                 info("音频连接建立成功");
                             }
                             if (message.contains(Action.ESTABLISH_READY)) {
+                                GlobalItem.getInstance().setRemoteAddr(remoteAddr);
                                 GlobalItem.getInstance().setVideoSocket(videoSocket);
                                 GlobalItem.getInstance().setControlSocket(controlSocket);
                                 GlobalItem.getInstance().setAudioSocket(audioSocket);

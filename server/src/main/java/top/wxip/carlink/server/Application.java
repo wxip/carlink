@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import top.wxip.carlink.common.Action;
 import top.wxip.carlink.common.ControlPacket;
 import top.wxip.carlink.common.Port;
+import top.wxip.carlink.common.Video;
 import top.wxip.carlink.server.util.Ln;
 import top.wxip.carlink.server.wrapper.DisplayInfo;
 import top.wxip.carlink.server.wrapper.DisplayManager;
@@ -82,7 +83,7 @@ public class Application {
             while (true) {
                 try {
                     byte[] packet = new byte[1024];
-                    final DatagramPacket datagramPacket = new DatagramPacket(packet,packet.length);
+                    final DatagramPacket datagramPacket = new DatagramPacket(packet, packet.length);
                     controlSocket.receive(datagramPacket);
                     final ControlPacket controlPacket = new ControlPacket(packet);
 
@@ -91,8 +92,8 @@ public class Application {
                     long now = SystemClock.uptimeMillis();
 
                     int action = controlPacket.getAction();
-                    float x = controlPacket.getX();
-                    float y = controlPacket.getY();
+                    float x = controlPacket.getX() * displayInfo.getWidth() / Video.width;
+                    float y = controlPacket.getY() * displayInfo.getHeight() / Video.height;
 
                     MotionEvent.PointerCoords coords = new MotionEvent.PointerCoords();
                     coords.x = x;

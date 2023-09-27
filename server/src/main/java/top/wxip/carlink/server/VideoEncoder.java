@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 import top.wxip.carlink.common.SocketUtil;
+import top.wxip.carlink.common.Video;
 import top.wxip.carlink.common.VideoPacket;
 import top.wxip.carlink.common.VideoPacketType;
 import top.wxip.carlink.server.util.Ln;
@@ -24,14 +25,18 @@ public class VideoEncoder {
         final int width = displayInfo.getWidth();
         final int height = displayInfo.getHeight();
 
-        final Rect rect = new Rect(0, 0, width, height);
+        int videoWidth = Video.width;
+        int videoHeight = Video.height;
+
+        final Rect deviceRect = new Rect(0, 0, width, height);
+        final Rect videoRect = new Rect(0, 0, videoWidth, videoHeight);
 
         final MediaFormat format = new MediaFormat();
-        format.setInteger(MediaFormat.KEY_WIDTH, width);
-        format.setInteger(MediaFormat.KEY_HEIGHT, height);
+        format.setInteger(MediaFormat.KEY_WIDTH, videoWidth);
+        format.setInteger(MediaFormat.KEY_HEIGHT, videoHeight);
         format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_VIDEO_AVC);
         format.setInteger(MediaFormat.KEY_BIT_RATE, 12 * 1000 * 1024);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, 60);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, Video.fps);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 10);
         format.setLong(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 100_000);
@@ -45,7 +50,7 @@ public class VideoEncoder {
         surfaceControl.openTransaction();
         try {
             surfaceControl.setDisplaySurface(display, surface);
-            surfaceControl.setDisplayProjection(display, 0, rect, rect);
+            surfaceControl.setDisplayProjection(display, 0, deviceRect, videoRect);
             surfaceControl.setDisplayLayerStack(display, 0);
         } finally {
             surfaceControl.closeTransaction();
@@ -54,7 +59,8 @@ public class VideoEncoder {
         codec.start();
 
         // 发送video宽高给client
-        SocketUtil.sendPacket(videoStream, new VideoPacket().setType(VideoPacketType.INFO).setWidth(width).setHeight(height).toByte());
+        SocketUtil.sendPacket(videoStream, new VideoPacket().setType(VideoPacketType.INFO)
+                .setWidth(videoWidth).setHeight(videoHeight).toByte());
 
         try {
             encode(codec, videoStream);

@@ -12,12 +12,12 @@
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         <activity
             android:name=".ViewActivity"
-            android:screenOrientation="portrait"
+            android:screenOrientation="landscape"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="portrait">
+            android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

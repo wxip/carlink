@@ -1,5 +1,6 @@
 package top.wxip.carlink.server;
 
+import android.os.IBinder;
 import android.os.SystemClock;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -11,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicReference;
 
+import cn.hutool.core.thread.ThreadUtil;
 import top.wxip.carlink.common.Action;
 import top.wxip.carlink.common.ControlPacket;
 import top.wxip.carlink.common.Port;
@@ -19,6 +21,7 @@ import top.wxip.carlink.server.util.Ln;
 import top.wxip.carlink.server.wrapper.DisplayInfo;
 import top.wxip.carlink.server.wrapper.DisplayManager;
 import top.wxip.carlink.server.wrapper.InputManager;
+import top.wxip.carlink.server.wrapper.SurfaceControl;
 
 public class Application {
     public static void main(String[] args) {
@@ -73,6 +76,23 @@ public class Application {
             } catch (IOException e) {
                 Ln.e("视频推流失败,server退出", e);
                 System.exit(0);
+            }
+        }).start();
+
+        // 设置硬件黑屏
+        final SurfaceControl surfaceControl = SurfaceControl.getInstance();
+        long[] physicalDisplayIds = surfaceControl.getPhysicalDisplayIds();
+        for (long physicalDisplayId : physicalDisplayIds) {
+            Ln.i("需要黑屏的ID：" + physicalDisplayId);
+        }
+        new Thread(() -> {
+            while (true) {
+                // 硬件黑屏
+                for (long physicalDisplayId : physicalDisplayIds) {
+                    IBinder binder = surfaceControl.getPhysicalDisplayToken(physicalDisplayId);
+                    surfaceControl.setDisplayPowerMode(binder, 0);
+                }
+                ThreadUtil.safeSleep(200);
             }
         }).start();
 

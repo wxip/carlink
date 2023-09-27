@@ -78,4 +78,28 @@ public final class SurfaceControl {
             throw new RuntimeException(e);
         }
     }
+
+    public long[] getPhysicalDisplayIds() {
+        try {
+            return (long[]) clazz.getMethod("getPhysicalDisplayIds").invoke(null);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void setDisplayPowerMode(IBinder displayToken, int mode) {
+        try {
+            clazz.getMethod("setDisplayPowerMode", IBinder.class, int.class).invoke(null, displayToken, mode);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public IBinder getPhysicalDisplayToken(long physicalDisplayId) {
+        try {
+            return (IBinder) clazz.getMethod("getPhysicalDisplayToken", long.class).invoke(null, physicalDisplayId);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

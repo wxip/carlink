@@ -3,6 +3,7 @@ package top.wxip.carlink.client;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -37,8 +38,16 @@ public class MainActivity extends Activity {
 
         final Button btnConnectAdb = findViewById(R.id.btn_connect_adb);
         final EditText etRemoteAddr = findViewById(R.id.et_remote_addr);
+        final SharedPreferences sharedPreferences = getSharedPreferences("carlink", MODE_PRIVATE);
 
-        btnConnectAdb.setOnClickListener(v -> startADB(etRemoteAddr.getText().toString()));
+        final String remoteAddrStore = sharedPreferences.getString("remoteAddr", "192.168.2.242");
+        etRemoteAddr.setText(remoteAddrStore);
+
+        btnConnectAdb.setOnClickListener(v -> {
+            String remoteAddr = etRemoteAddr.getText().toString();
+            sharedPreferences.edit().putString("remoteAddr", remoteAddr).apply();
+            startADB(remoteAddr);
+        });
 
     }
 

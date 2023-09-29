@@ -7,16 +7,15 @@ import android.media.AudioFormat;
 import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.os.Bundle;
-import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.ViewGroup;
 
 import com.orhanobut.logger.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -61,6 +60,13 @@ public class ViewActivity extends Activity {
                                     remoteHeight = videoPacket.getHeight();
                                     Logger.i("远端视频流 %dx%d", remoteWidth, remoteHeight);
 
+                                    Logger.i("本地显示 " + displayView.getWidth() + " " + displayView.getHeight());
+
+                                    final ViewGroup.LayoutParams lp = displayView.getLayoutParams();
+                                    lp.width = displayView.getHeight() * remoteWidth / remoteHeight;
+                                    runOnUiThread(() -> {
+                                        displayView.setLayoutParams(lp);
+                                    });
                                     setControlSocket(displayView, remoteWidth, remoteHeight);
 
                                     break;
